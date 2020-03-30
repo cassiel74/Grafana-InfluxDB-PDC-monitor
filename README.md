@@ -1,2 +1,7 @@
-# raffaele.morelli-gmail.com
 ENERGETICAMBIENTE
+
+Requisiti
+Installazione pacchetti
+periferiche
+configurazione influx
+configurazione grafana
