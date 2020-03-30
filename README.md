@@ -1,7 +1,8 @@
 ENERGETICAMBIENTE
 
-Requisiti
-Installazione pacchetti
-periferiche
-configurazione influx
-configurazione grafana
+Requisiti</br>
+Installazione pacchetti</br>
+periferiche</br>
+configurazione influx</br>
+configurazione grafana</br>
+backup</br>
