@@ -229,11 +229,11 @@ Seguite quindi le istruzioni per il primo accesso con l'utente di default ```use
 Autenticarsi, se già non lo siete, in Grafana e cercate "Data Sources".  Select "Add new Data Source” and find InfluxDB under "Timeseries Databases”.
 
 <pre>
-<img style='float: left; width: 300px;' src='img/1-data-source.png' />
+<img style='float: left; width: 200px;' src='img/1-data-source.png' width='200px' />
 </pre>
 
 <pre>
-<img style='float: left; width: 300px;' src='img/2-data-source.png' />
+<img style='float: left; width: 200px;' src='img/2-data-source.png' width='200px' />
 </pre>
 
 
