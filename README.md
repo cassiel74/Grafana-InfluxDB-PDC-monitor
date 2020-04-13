@@ -1,48 +1,91 @@
-ENERGETICAMBIENTE
+# ENERGETIC(A)MBIENTE
 
-- Requisiti</br>
+Come requisito per questa breve guida supponiamo di avere una installazione Raspbian funzionante ed in rete (locale/LAN o WAN) e relativo indirizzo IP.
 
-Follow these steps first if you have a brand new rPi:
+Supponendo che il vostro Raspi sia attivo h24 (e debba restarci) è preferibile associargli un indirizzo IP statico anziché lasciarlo in balia del router e fargli assegnare un indirizzo diverso ogni volta che il vostro lease scade perché magari avete lasciato spento il raspi per troppo tempo per un motivo o per un altro.
 
-Download the latest lite Raspbian image from raspberrypi.org
+Io ho un TP-LINK e la pagina di configurazione è la seguente. Il ```raspi-monitor``` è l'ultimo della lista con un ip statico 192.168.1.111.
 
-Get a reasonable micro SD card - 32GB is the maximum supported size. I use a SanDisk Ultra
+<pre>
+<img src='img/1-static.png' width='400px' />
+</pre>
 
-Burn the image to your SD card, I recommend using balenaEtcher.
+## DNS locale (una semplificazione utile)
 
-Balena will eject your SD card once it is complete, re-mount your card by physically removing and re-inserting it, then create an empty file called ssh in the root of the SD card - this enables SSH access which we’ll need later.
+Chi si connette da una macchina linux (ma credo anche su winzozz ci sia l'analogo) può andare ad aggiungere, subito dopo la prima riga del file ```/etc/hosts```, questa:
 
-Insert the SD card into your Pi, connect to your router via ethernet and power on.
+```
+192.168.1.111   raspi
+```
 
-Determine the auto-assigned IP address of the Pi by logging in to your router interface (see a guide on finding your router IP address here) and navigating to LAN / DHCP settings - the pi should be recognised as raspberrypi. Now is a good time to assign a static IP for your Pi to make life easier in the future. You’ll need to power cycle your Pi if you change from the auto assigned IP address.
+in modo da avere nel file qualcosa di simile (questo è il file del mio PC)
 
-SSH into the Pi using the IP address you have determined / assigned: ssh pi@<yourip>. You should probably update the password for the pi user now by running passwd.
+```
+127.0.0.1	localhost localhost.localdomain debian
+192.168.1.111   raspi
 
-(optional!) put your Pi in a case to keep it safe and cool. I found a cheap (£6 / $8) case with heatsinks and fan on Amazon.
+# The following lines are desirable for IPv6 capable hosts
+::1     localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+```
 
-- Installazione pacchetti</br>
+Così facendo possiamo connetterci al nostro Raspi (sia da browser che attraverso ssh) usando 
+
+```
+ssh pi@raspi
+```
+
+Anziché sgranare ogni volta tutto l'indirizzo Ip.
+
+Chiaramente potete usare un *alias* (in realtà è il DNS locale) qualsiasi a posto di ```raspi``` ;-)
+
+# Note
+
+Tutti i comandi che seguiranno si suppone vengano lanciati usando un utente non privilegiato, che su una installazione Raspberry è comunemente l'utente **pi**.
+Le parti in grigetto del codice rappresentano commenti (tutto ciò che segue il simbolo #) e possono pertanto essere copiati ed incollati per intero insieme alla parte dei comandi veri e propri. Non verranno eseguiti.
+
+Le parti in grigetto che contegono comandi (in alcuni commenti sono stati inseriti) possono essere utilizzate come indicato.
+
+# Installazione pacchetti
 
 ```bash
 sudo apt update
 sudo apt upgrade -y
 ```
 
-Influx
+## Influx
 
-```bash
+Iniziamo con l'informare il sistema di gestione dei pacchetti (APT) che andremo ad utilizzare le repo influx ed aggiungiamo quindi la chiave corrispondente con un *oneliner*. 
+
+(*wget* dovrebbe essere presente di default, in caso contrario caso dovrete installarlo ```apt-get -y install wget```)
+
+```sh
 wget -qO- https://repos.influxdata.com/influxdb.key | sudo apt-key add -
-source /etc/os-release
+```
+Provvediamo ad inserire le repo del nostro sistema operativo (versione esatta corrente) nei relativi file di configurazione APT
+
+```sh
+source /etc/os-release # in questo modo rendiamo disponibili le informazioni sul sistema nella shell su cui stiamo lavorando
+# se volete curiosare usate cat /etc/os-release, non fa male :)
+
 echo "deb https://repos.influxdata.com/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+```
 
-echo "deb https://repos.influxdata.com/debian stretch stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
-echo "deb https://repos.influxdata.com/debian buster stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+se volete curiosare e vedere cosa avete aggiunto al file influxdb.list lanciate solo la prima parte del comando (quella prima del pipe "|"")
 
-echo "deb https://repos.influxdata.com/ubuntu bionic stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
-echo "deb https://repos.influxdata.com/ubuntu xenial stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+```sh
+echo "deb https://repos.influxdata.com/debian $(lsb_release -cs) stable"
+```
 
+Aggiorniamo le repo ed installiamo Influx
+
+```
 sudo apt update
 sudo apt install influxdb
 ```
+
+Adesso è il momento di abilitare Influx come servizio all'avvio e farlo partire per il resto della guida.
 
 ```bash
 sudo systemctl unmask influxdb
@@ -51,19 +94,18 @@ sudo systemctl enable influxdb
 sudo systemctl start influxdb
 ```
 
-# Connesione InfluxDB 
+## Connessione ad InfluxDB 
 
-To do this, we will need to launch up Influx’s command-line tool by running the command below.
+Per connetterci ad Influx dobbiamo usare l'interfaccia a riga di comando (CLI da ora in poi) e visto che siamo sul nostro Raspi è sufficiente lanciare il comando che segue, senza preoccuparci di specificare *host*, *utente* (ed eventualmente porta, se diversa da quella di default). 
 
-You don’t have to worry about specifying an address to connect to as the tool will automatically detect the local installation of InfluxDB.
-
-By default, InfluxDB has no users setup. In our next section, we will explore creating an admin user to lock down access to your InfluxDB. For now, however, we will quickly explore InfluxDB.
-
+Quindi 
 ```
 influx
 ```
 
-# Primo database
+siamo dentro.
+
+## Primo database
 
 Per creare un database in influx è sufficente lo standard SQL quindi basta semplicemente usare la sintassi:
 
@@ -82,7 +124,7 @@ altro passaggio, anch'esso comune a tutti i db manager, è quello di istruire in
 USE PDC
 ```
 
-# Breve intro su InfluxDB
+## Breve intro su InfluxDB
 
 InfluxDB organizza i dati in serie storiche (time series o misure) in cui ogni punto della serie rappresenta una un campione.
 
@@ -106,7 +148,7 @@ Il formato di un data point è quindi
 
 Per approfondimenti si rimanda alla [documentazione ufficiale](https://docs.influxdata.com/influxdb/v1.7/).
 
-# Creazione tabella (misura) ed inserimento dati
+## Creazione tabella (misura) ed inserimento dati
 
 Per lo scopo di questo tutorial avremo bisogno di inserire dati di temperatura per mandata, ritorno e temperatura esterna. Quindi per quanto detto in precedenza useremo come nome della misura "temperature", un tag "sorgente" e come nome di campo "value".
 
@@ -125,7 +167,7 @@ INSERT temperature,sorgente=esterna value=18
 ```
 
 
-# Utilizzo della clausola "SELECT"
+## Utilizzo della clausola "SELECT"
 
 To start with, you can retrieve all data from a measurement by using a command like below. This command will grab all fields and keys from the specified measurement.
 
@@ -146,7 +188,7 @@ time                sorgente    value
 1586749440223591274 esterna     18
 ```
 
-# Utilizzo della clausola "WHERE"
+## Utilizzo della clausola "WHERE"
 
 Per selezionare soltanto la temperatura di mandata basta procedere nel modo canonico usana una SELECT associata alla condizione WHERE specificando i tag o campi di cui vogliamo il valore.
 
@@ -168,7 +210,7 @@ time                value
 Abbiamo ottenuto le sole temperature di mandata.
 
 
-# Autenticazione
+## Autenticazione
 
 Utilizzare credenziali di autenticazione è sempre una buona prassi, anche per installazioni locali. 
 
@@ -192,7 +234,7 @@ CREATE USER grafana WITH PASSWORD '<password-super-segreta>'
 GRANT READ ON PDC TO grafana;
 ```
 
-# Installazione e configurazione Grafana
+# Grafana
 
 Again we need to add the Grafana packages to apt:
 
@@ -215,27 +257,63 @@ sudo systemctl start grafana-server
 sudo systemctl enable grafana-server.service
 ```
 
-A questo punto Grafana dovrebbe essere *up and running* ed in ascolto sulla porta di default, quindi visitate
+A questo punto Grafana dovrebbe essere *up and running* ed in ascolto sulla porta di default.
 
-http://localhost:3000
+Dalla macchina che userete per connettervi al Raspi aprite il browser e visitate la pagina
 
-se siete sulla macchina (o il raspi) dove avete installato Grafana, altrimenti andrete a sostiuire *localhost* con l'indirizzo remoto opportuno (locale o pubblico).
+http://<indirizzo-ip>:3000
+
+altrimenti potete usare l'alias inserito in precedenza sostituendo *<indirizzo-ip>* con quello che avete scelto. Nel mio caso 
+
+```
+http://raspi:3000
+```
 
 Seguite quindi le istruzioni per il primo accesso con l'utente di default ```username``` e ```password``` sono ```admin```. Poi cambiate la password a vostro piacimento.
 
 
 # Aggiungere Influx come *data source*
 
-Autenticarsi, se già non lo siete, in Grafana e cercate "Data Sources".  Select "Add new Data Source” and find InfluxDB under "Timeseries Databases”.
+Autenticarsi, se già non lo siete, in Grafana e cercate "Data Sources", selezionate "Add new Data Source” e scegliete InfluxDB come tipologia.
 
 <pre>
-<img style='float: left; width: 200px;' src='img/1-data-source.png' width='200px' />
+<img src='img/1-data-source.png' width='400px' />
 </pre>
 
 <pre>
-<img style='float: left; width: 200px;' src='img/2-data-source.png' width='200px' />
+<img src='img/2-data-source.png' width='400px' />
 </pre>
 
+Potete salvare la connessione (lasciate il nome di default oppure cambiatelo a vostro piacimento), Grafana effettuerà un test per voi restituendo un messaggio se la connessione è andata a buon fine. Se tutto è andato liscio siete pronti per il primo grafico.
 
 
-- backup</br>
+## Primo grafico
+
+Procediamo ora creando la nostra prima dashboard che sarà il contenitore dove andremo ad inserire in nostri grafici o report etc...
+<pre>
+<img src='img/1-dashboard.png' width='200px' />
+</pre>
+
+Dopo aver scelto... "Dashboard" :-) si presenterà questa schermata:
+
+Scegliete "Add Query" vi si presenterà questa pagina. Attenzione al menù a tendina a destra di "Query", quello evidenziato. In quel menù vedrete comparire la sorgente che avete inserito nella sezione precedente, se avete lasciato il nome di default probabilmente sarà semplicemente "InfluxDB", nel mio caso è diversa perché ho già una sorgente con quel nome. 
+
+All'occorrenza potete inserire quanti *data source* volete (anche ad altra tipologia di database chiaramente).
+
+<pre>
+<img src='img/2a-dashboard.png' width='400px' />
+</pre>
+
+Per creare un grafico sarà a questo punto sufficente inserire i parametri di interessa nel riquadro in basso, nello specifico: 
+
+- indicare la tabella nella condizione FROM, nel nostro caso "temperature"
+- specificare quale *tag* vogliamo utilizzare per il grafico
+- cosa vogliamo dalla SELECT (una media, un massimo, il valore in se, etc etc...)
+
+scegliamo il valore nudo e crudo con DISTINCT. 
+
+Il risultato sarà qualcosa di simile se avrete inserito, come ho fatto io, più punti per il *key* (colonna o campo) "mandata" relativo al *tag* "sorgente" (indice)
+
+<pre>
+<img src='img/2-query-grafico.png' width='400px' />
+</pre>
