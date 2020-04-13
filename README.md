@@ -71,139 +71,171 @@ Per creare un database in influx è sufficente lo standard SQL quindi basta semp
 
 Iniziamo a chiamare le cose con il proprio nome quindi il nostro primo database si chiamerà PDC,
 
-```CREATE DATABASE PDC```
+```sql
+CREATE DATABASE PDC
+```
 
 altro passaggio, anch'esso comune a tutti i db manager, è quello di istruire influx su quale db stiamo operando. Lo facciamo con il comando ```USE```
 
 
-```
+```sql
 USE PDC
 ```
 
+# Breve intro su InfluxDB
+
+InfluxDB organizza i dati in serie storiche (time series o misure) in cui ogni punto della serie rappresenta una un campione.
+
+Un punto (data point) consiste di: 
+
+- tempo 
+- nome della misura
+- uno o più valori
+
+Si possono utilizzare anche dei *tags* che sono sostanzialmente stringhe di testo che vengono utilizzate come indici per ottimizzare le ricerche.
+
+Il tempo rappresenta la cosidetta chiave primaria (primary key), la misura la tabella ed i tags e campi sono le colonne.
+
+In sede di inserimento dati non è necessario specificare il tempo (timestamp) a meno che non si abbia la necessità di usarne uno diverso da quello di sistema (ad esempio per caricare dati storici).
+
+Il formato di un data point è quindi
+
+```
+<measurement>[,<tag-key>=<tag-value>...] <field-key>=<field-value>[,<field2-key>=<field2-value>...] [unix-nano-timestamp]
+```
+
+Per approfondimenti si rimanda alla [documentazione ufficiale](https://docs.influxdata.com/influxdb/v1.7/).
+
 # Creazione tabella (misura) ed inserimento dati
 
-To do this, we must first get a basic understanding of InfluxDB’s datastore.
+Per lo scopo di questo tutorial avremo bisogno di inserire dati di temperatura per mandata, ritorno e temperatura esterna. Quindi per quanto detto in precedenza useremo come nome della misura "temperature", un tag "sorgente" e come nome di campo "value".
 
-Data in InfluxDB are sorted by “time series“. These “time series” can contain as many or as little data points as you need. Each of these data points represents a single sample of that metric.
+Quindi
 
-A data point consists of the time, a measurement name such as “temperature”, and at least one field. You can also use tags which are indexed pieces of data that are a string only. Tags are essential for optimizing database lookups.
+```sql
+INSERT temperature,sorgente=mandata value=20
+```
 
-If you are familiar with the general layout of an SQL table, you can consider “time” to be the primary index, measurement as the table name, and the tags and fields as the column names.
+Quindi per inserire ulteriori punti
 
-You do not need to specify the timestamp unless you want to specify a specific time and date for the data point.
+```sql
+INSERT temperature,sorgente=mandata value=35
+INSERT temperature,sorgente=ritorno value=33
+INSERT temperature,sorgente=esterna value=18
+```
 
-Below we have included the basic format of an InfluxDB data point.
 
-<measurement>[,<tag-key>=<tag-value>...] <field-key>=<field-value>[,<field2-key>=<field2-value>...] [unix-nano-timestamp]
-If you would like to learn more about the InfluxDB line syntax, then you can check out the InfluxDB official documentation.
-
-5. Now that we have a basic understanding of data in InfluxDB, we can now proceed to add our very first data point to our database.
-
-For this example database, we are going to be storing measurements of the “temperature” of various locations around a house.
-
-So for this, we will be inserting data points with a measurement name of “temperature” and a tag key of “location“, and a field key of “value“.
-
-For our first sample point, we will be saying the location is the “living_room“, and the value is “20” .
-
-INSERT temperature,location=living_room value=20
-6. To make the data more interesting for showing off “selecting” data in InfluxDB, let’s go ahead and add some more random data.
-
-Enter the following few commands to enter some extra data into our database. These are just variations of the above “INSERT” command but with the value and location adjusted.
-
-INSERT temperature,location=living_room value=10
-INSERT temperature,location=bedroom value=34
-INSERT temperature,location=bedroom value=23
-7. Now that we have some sample data, we can now show you how to query this data using “SELECT“.
+# Utilizzo della clausola "SELECT"
 
 To start with, you can retrieve all data from a measurement by using a command like below. This command will grab all fields and keys from the specified measurement.
 
+```sql
 SELECT * FROM temperature
+```
+
 Using that command with our sample data you should get a result like we have below.
 
+```
+SELECT * FROM temperature
 name: temperature
-time                location    value
+time                sorgente    value
 ----                --------    -----
-1574055049844513350 living_room 20
-1574055196564029842 living_room 10
-1574055196576516557 bedroom     34
-1574055197188117724 bedroom     23
-8. Let’s say that you now only wanted to retrieve the temperature of the bedroom. You can do that by making use of the “WHERE” statement alongside a “SELECT” statement.
+1586749433336403281 mandata     20
+1586749435859176782 mandata     35
+1586749438114881978 ritorno     33
+1586749440223591274 esterna     18
+```
 
-We also specify the name of the tags/fields that we want to retrieve the values from.
+# Utilizzo della clausola "WHERE"
 
-When querying tag fields, you need to remember that all tags are considered to be strings. This means that we must wrap the value we are searching for in single quotes.
+Per selezionare soltanto la temperatura di mandata basta procedere nel modo canonico usana una SELECT associata alla condizione WHERE specificando i tag o campi di cui vogliamo il valore.
 
-SELECT value FROM temperature WHERE location='bedroom'
-With that command, you should receive the following data set, showing only the temperature value in the bedroom.
+Come detto in precedenza i *tag* sono considerati come stringhe pertanto quando vengono utilizzati come termini di ricerca devono essere racchiusi tra apici singoli.
 
-Which in our example data’s case, this should be 34 and 23.
 
+```sql
+SELECT value FROM temperature WHERE sorgente='mandata'
+```
+
+```
 name: temperature
-time                location    value
-----                --------    -----
-1574055049844513350 living_room 20
-1574055196564029842 living_room 10
-1574055196576516557 bedroom     34
-1574055197188117724 bedroom     23
-9. At this point, you should now have a basic understanding of InfluxDB and how its data works.
+time                value
+----                -----
+1586749433336403281 20
+1586749435859176782 35
+```
 
- Adding Authentication to InfluxDB
-1. The next step is to add extra authentication to our InfluxDB installation on the Raspberry Pi. Without authentication, anyone could interact with your database.
+Abbiamo ottenuto le sole temperature di mandata.
 
-To get started, we need to first create a user to act as our admin.
 
-To create this user, we must first load up the InfluxDB CLI tool by running the following command.
+# Autenticazione
 
+Utilizzare credenziali di autenticazione è sempre una buona prassi, anche per installazioni locali. 
+
+Come primo passo creiamo un utente amministratore quindi utilizziamo Influx dalla riga di comando (CLI) 
+
+```sh
 influx
-2. Within this interface, we can create a user that will have full access to the database. This user will act as our admin account.
+```
 
-To create this admin user, run the following command within InfluxDB’s CLI tool.
+e lanciamo questo comando, sostituendo a ```<password>``` una stringa complicata "quanto necessario". Per installazioni in rete locale privata si può usare una stringa semplice, se un futuro il servizio verrà esposto all'esterno allora sarà necessario aumentare il livello di complessità.
 
-Make sure that you replace <password> with a secure password of your choice.
-
+```sql
 CREATE USER admin WITH PASSWORD '<password>' WITH ALL PRIVILEGES
-This command will create a new user called “admin” with your chosen password and grant it all privileges.
+```
 
-3. With that done, you can now exit out of InfluxDB by typing in “exit” and pressing ENTER.
+Il nome dell'utente amministratore è arbitrario e non deve essere necessariamente ```admin```.
 
-4. Our next job is to modify the InfluxDB config file to enable authentication.
+Creiamo adesso un utente per Grafana che abbia i privilegi di sola lettura (sempre per buona prassi)
+```sql
+CREATE USER grafana WITH PASSWORD '<password-super-segreta>'
+GRANT READ ON PDC TO grafana;
+```
 
-We can begin editing the file by using the command below.
+# Installazione e configurazione Grafana
 
-sudo nano /etc/influxdb/influxdb.conf
-5. Within this file, use CTRL + W to find the [HTTP] section and add the following options underneath that section.
+Again we need to add the Grafana packages to apt:
 
-Find
+```sh
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+```
 
-[HTTP]
-Add Below
+Procediamo adesso all'installazione, previo aggiornamento della lista dei pacchetti della nuova repo
 
-auth-enabled = true
-pprof-enabled = true
-pprof-auth-enabled = true
-ping-auth-enabled = true
-6. Once added, save the file by pressing CTRL + X, then Y, followed by ENTER.
+```
+sudo apt update && sudo apt install -y grafana
+```
 
-7. Now, as we have made changes to InfluxDB’s configuration, we will need to go ahead and restart the service by using the following command.
+Il prossimo step è quello di abilitare il servizio all'avvio 
 
-Restarting the service will ensure that our configuration changes are read in.
+```sh
+sudo systemctl unmask grafana-server.service
+sudo systemctl start grafana-server
+sudo systemctl enable grafana-server.service
+```
 
-sudo systemctl restart influxdb
-8. As we have now turned InfluxDB’s authentication on, we will need to enter our username and password before using the InfluxDB CLI tool.
+A questo punto Grafana dovrebbe essere *up and running* ed in ascolto sulla porta di default, quindi visitate
 
-You can use the “auth” command within the tool or pass the username and password in through the command line, as we have below.
+http://localhost:3000
 
-influx -username admin -password <password>
-Hopefully, at this point, you will now have successfully set up InfluxDB on your Raspberry Pi. You should now have a basic understanding of InfluxDB as well as have authentication mode enabled.
+se siete sulla macchina (o il raspi) dove avete installato Grafana, altrimenti andrete a sostiuire *localhost* con l'indirizzo remoto opportuno (locale o pubblico).
 
-You can easily see how using this database model will make storing data from sensors and other sources very useful.
+Seguite quindi le istruzioni per il primo accesso con l'utente di default ```username``` e ```password``` sono ```admin```. Poi cambiate la password a vostro piacimento.
 
-If you have run into any issues with getting a Raspberry Pi InfluxDB up and  running, then feel free to drop a comment below.
 
-- periferiche</br>
+# Aggiungere Influx come *data source*
 
-- configurazione influx</br>
+Autenticarsi, se già non lo siete, in Grafana e cercate "Data Sources".  Select "Add new Data Source” and find InfluxDB under "Timeseries Databases”.
 
-- configurazione grafana</br>
+<pre>
+<img style='float: left; width: 300px;' src='img/1-data-source.png' />
+</pre>
+
+<pre>
+<img style='float: left; width: 300px;' src='img/2-data-source.png' />
+</pre>
+
+
 
 - backup</br>
