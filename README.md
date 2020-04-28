@@ -1,6 +1,7 @@
 # ENERGETIC(A)MBIENTE
 
-Come requisito per questa breve guida supponiamo di avere una installazione Raspbian funzionante ed in rete (locale/LAN o WAN) e relativo indirizzo IP.
+Come requisito per questa breve guida supponiamo di avere una installazione di un sistema *unix like* (Raspbian per raspberry ad esempio oppure una qualsiasi distro linux) funzionante ed in rete (locale/LAN o WAN) e relativo indirizzo IP. Nella guida verrà preso ad esempio il raspberry, da qui in avanti indicato con "Raspi".
+Le modifiche da apportare sono minimali e pressoché tutte automatiche nel caso si voglia utilizzare un desktop .
 
 Supponendo che il vostro Raspi sia attivo h24 (e debba restarci) è preferibile associargli un indirizzo IP statico anziché lasciarlo in balia del router e fargli assegnare un indirizzo diverso ogni volta che il vostro lease scade perché magari avete lasciato spento il raspi per troppo tempo per un motivo o per un altro.
 
@@ -111,17 +112,17 @@ Per creare un database in influx è sufficente lo standard SQL quindi basta semp
 
 <pre>CREATE DATABASE <DBNAME></pre>
 
-Iniziamo a chiamare le cose con il proprio nome quindi il nostro primo database si chiamerà PDC,
+Iniziamo a chiamare le cose con il proprio nome quindi il nostro primo database si chiamerà PDC
 
 ```sql
-CREATE DATABASE PDC
+CREATE DATABASE pdc
 ```
 
 altro passaggio, anch'esso comune a tutti i db manager, è quello di istruire influx su quale db stiamo operando. Lo facciamo con il comando ```USE```
 
 
 ```sql
-USE PDC
+USE pdc
 ```
 
 ## Breve intro su InfluxDB
@@ -231,7 +232,7 @@ Il nome dell'utente amministratore è arbitrario e non deve essere necessariamen
 Creiamo adesso un utente per Grafana che abbia i privilegi di sola lettura (sempre per buona prassi)
 ```sql
 CREATE USER grafana WITH PASSWORD '<password-super-segreta>'
-GRANT READ ON PDC TO grafana;
+GRANT READ ON pdc TO grafana;
 ```
 
 # Grafana
