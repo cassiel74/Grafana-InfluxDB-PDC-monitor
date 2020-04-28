@@ -317,3 +317,18 @@ Il risultato sarà qualcosa di simile se avrete inserito, come ho fatto io, più
 <pre>
 <img src='img/2-query-grafico.png' width='400px' />
 </pre>
+
+
+## Dashboard
+
+Questi sono soltanto due esempi delle dashboard che si possono ottenere.
+
+Di seguito il pannello con mandata e ritorno della PDC e in basso il delta, più a destra mandata e ritorno correnti ed in basso il delta corrente. A seguire i parametri ambientali con andamento di temperatura ed umidità esterna ed in basso i valori istantanei.
+<pre>
+<img src='img/dash-pdc-1.png' width='400px' />
+</pre>
+
+I pannelli possono rappresentare anche aggregazioni.
+<pre>
+<img src='img/dash-pdc-2.png' width='400px' />
+</pre>
