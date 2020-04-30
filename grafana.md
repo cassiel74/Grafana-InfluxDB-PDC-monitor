@@ -1,6 +1,6 @@
 # Grafana
 
-Again we need to add the Grafana packages to apt:
+Dobbiamo aggiungere ancora una volta le *repository* Grafana per *apt*:
 
 ```sh
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
@@ -41,11 +41,11 @@ Seguite quindi le istruzioni per il primo accesso con l'utente di default ```use
 Autenticarsi, se già non lo siete, in Grafana e cercate "Data Sources", selezionate "Add new Data Source” e scegliete InfluxDB come tipologia.
 
 <pre>
-<img src='img/1-data-source.png' width='400px' />
+<img src='img/1-data-source.png' width='500px' />
 </pre>
 
 <pre>
-<img src='img/2-data-source.png' width='400px' />
+<img src='img/2-data-source.png' width='500px' />
 </pre>
 
 Potete salvare la connessione (lasciate il nome di default oppure cambiatelo a vostro piacimento), Grafana effettuerà un test per voi restituendo un messaggio se la connessione è andata a buon fine. Se tutto è andato liscio siete pronti per il primo grafico.
@@ -65,7 +65,7 @@ Scegliete "Add Query" vi si presenterà questa pagina. Attenzione al menù a ten
 All'occorrenza potete inserire quanti *data source* volete (anche ad altra tipologia di database chiaramente).
 
 <pre>
-<img src='img/2a-dashboard.png' width='400px' />
+<img src='img/2a-dashboard.png' width='500px' />
 </pre>
 
 Per creare un grafico sarà a questo punto sufficente inserire i parametri di interessa nel riquadro in basso, nello specifico: 
@@ -79,7 +79,7 @@ scegliamo il valore nudo e crudo con DISTINCT.
 Il risultato sarà qualcosa di simile se avrete inserito, come ho fatto io, più punti per il *key* (colonna o campo) "mandata" relativo al *tag* "sorgente" (indice)
 
 <pre>
-<img src='img/2-query-grafico.png' width='400px' />
+<img src='img/2-query-grafico.png' width='500px' />
 </pre>
 
 
@@ -89,10 +89,10 @@ Questi sono soltanto due esempi delle dashboard che si possono ottenere.
 
 Di seguito il pannello con mandata e ritorno della PDC e in basso il delta, più a destra mandata e ritorno correnti ed in basso il delta corrente. A seguire i parametri ambientali con andamento di temperatura ed umidità esterna ed in basso i valori istantanei.
 <pre>
-<img src='img/dash-pdc-1.png' width='400px' />
+<img src='img/dash-pdc-1.png' width='500px' />
 </pre>
 
 I pannelli possono rappresentare anche aggregazioni.
 <pre>
-<img src='img/dash-pdc-2.png' width='400px' />
+<img src='img/dash-pdc-2.png' width='500px' />
 </pre>

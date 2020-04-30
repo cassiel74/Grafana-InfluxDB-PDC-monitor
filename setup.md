@@ -8,7 +8,7 @@ Supponendo che il vostro Raspi sia attivo h24 (e debba restarci) è preferibile 
 Io ho un TP-LINK e la pagina di configurazione è la seguente. Il ```raspi-monitor``` è l'ultimo della lista con un ip statico 192.168.1.111.
 
 <pre>
-<img src='img/1-static.png' width='400px' />
+<img src='img/1-static.png' width='500px' />
 </pre>
 
 ## DNS locale (una semplificazione utile)
