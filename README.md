@@ -1,5 +1,14 @@
 # ENERGETIC(A)MBIENTE
 
+
+- <a href="setup.md">SETUP</a>
+- <a href="influxdb.md">InfluxDB</a>
+- <a href="grafana.md">Grafana</a>
+- <a href="sonde.md">Sonde, lettura, scheduler</a>
+
+
+
+
 Come requisito per questa breve guida supponiamo di avere una installazione di un sistema *unix like* (Raspbian per raspberry ad esempio oppure una qualsiasi distro linux) funzionante ed in rete (locale/LAN o WAN) e relativo indirizzo IP. Nella guida verrà preso ad esempio il raspberry, da qui in avanti indicato con "Raspi".
 Le modifiche da apportare sono minimali e pressoché tutte automatiche nel caso si voglia utilizzare un desktop .
 
